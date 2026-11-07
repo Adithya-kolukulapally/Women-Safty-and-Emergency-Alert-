@@ -18,6 +18,12 @@ A MERN application for managing trusted emergency contacts and sharing a locatio
 
 The API runs on port 5000. The client calls it through the Vite `/api` proxy.
 
+## Deploy to Render
+
+This repository includes `render.yaml` for a single Node web service. Render should run `npm ci && npm run build` and then `npm start`; Express serves the built React client and the API from the same URL. Set `MONGODB_URI` to the Atlas connection string in the Render service environment. Render generates `JWT_SECRET` from the Blueprint configuration. Do not upload `server/.env`.
+
+If deploying through an existing Render service instead of creating/syncing the Blueprint, change its runtime from Python to Node, set the build command to `npm ci && npm run build`, and the start command to `npm start`. Add `MONGODB_URI` and a strong `JWT_SECRET` as Render environment variables.
+
 ## Safety behavior
 
 The app does not send SMS or call emergency services. Starting an alert requests browser location permission and opens the device's SMS composer addressed to saved contacts, with a location link in the message. The user must review and send it. Live sharing is visible in the app, can be stopped at any time, and coordinates are sent to the API only while active; the API does not store or log them. Use a real SMS provider and deployment-grade security before relying on this in an emergency.
