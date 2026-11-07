@@ -24,6 +24,10 @@ This repository includes `render.yaml` for a single Node web service. Render sho
 
 If deploying through an existing Render service instead of creating/syncing the Blueprint, change its runtime from Python to Node, set the build command to `npm ci && npm run build`, and the start command to `npm start`. Add `MONGODB_URI` as a Render environment variable.
 
+## Deploy to Vercel
+
+The root `vercel.json` configures the Express app and serves the Vite build from `public/`. Import the repository with the **repository root** as the Root Directory. Set `MONGODB_URI` in the Vercel project's Environment Variables, then deploy. Vercel uses the Express app for the API and the generated `public/` directory for static assets.
+
 ## Safety behavior
 
 The app does not send SMS or call emergency services. Starting an alert requests browser location permission and opens the device's SMS composer addressed to saved contacts, with a location link in the message. The user must review and send it. Live sharing is visible in the app, can be stopped at any time, and coordinates are sent to the API only while active; the API does not store or log them. Use a real SMS provider and deployment-grade security before relying on this in an emergency.
