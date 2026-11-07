@@ -9,8 +9,8 @@ import authRoutes from './routes/auth.js';
 import contactRoutes from './routes/contacts.js';
 import alertRoutes from './routes/alerts.js';
 
-if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
-  console.error('Set MONGODB_URI and JWT_SECRET in server/.env');
+if (!process.env.MONGODB_URI) {
+  console.error('Set MONGODB_URI in the server environment (or server/.env for local development).');
   process.exit(1);
 }
 

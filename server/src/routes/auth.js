@@ -1,12 +1,20 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { createHash, randomBytes } from 'node:crypto';
 import User from '../models/User.js';
+import Session from '../models/Session.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
-const tokenFor = user => jwt.sign({ sub: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const sessionDuration = 7 * 24 * 60 * 60 * 1000;
+const tokenHash = token => createHash('sha256').update(token).digest('hex');
 const publicUser = user => ({ id: user.id, name: user.name, email: user.email });
+
+async function createSession(user) {
+  const token = randomBytes(32).toString('base64url');
+  await Session.create({ user: user._id, tokenHash: tokenHash(token), expiresAt: new Date(Date.now() + sessionDuration) });
+  return token;
+}
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -16,7 +24,7 @@ router.post('/register', async (req, res, next) => {
     if (await User.exists({ email: email.toLowerCase().trim() }))
       return res.status(409).json({ message: 'An account with that email already exists.' });
     const user = await User.create({ name, email, passwordHash: await bcrypt.hash(password, 12) });
-    res.status(201).json({ token: tokenFor(user), user: publicUser(user) });
+    res.status(201).json({ token: await createSession(user), user: publicUser(user) });
   } catch (error) { next(error); }
 });
 
@@ -25,7 +33,7 @@ router.post('/login', async (req, res, next) => {
     const user = await User.findOne({ email: (req.body.email || '').toLowerCase().trim() });
     if (!user || !await bcrypt.compare(req.body.password || '', user.passwordHash))
       return res.status(401).json({ message: 'Email or password is incorrect.' });
-    res.json({ token: tokenFor(user), user: publicUser(user) });
+    res.json({ token: await createSession(user), user: publicUser(user) });
   } catch (error) { next(error); }
 });
 
@@ -34,6 +42,13 @@ router.get('/me', requireAuth, async (req, res, next) => {
     const user = await User.findById(req.userId).select('name email');
     if (!user) return res.status(404).json({ message: 'Account not found.' });
     res.json({ user: publicUser(user) });
+  } catch (error) { next(error); }
+});
+
+router.post('/logout', requireAuth, async (req, res, next) => {
+  try {
+    await Session.deleteOne({ tokenHash: req.sessionTokenHash });
+    res.sendStatus(204);
   } catch (error) { next(error); }
 });
 

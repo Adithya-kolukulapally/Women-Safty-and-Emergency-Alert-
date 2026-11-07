@@ -43,6 +43,7 @@ export default function App() {
 
   const signOut = () => {
     stopAlert(false);
+    if (session?.token) request('/auth/logout', { token: session.token, method: 'POST' }).catch(() => {});
     localStorage.removeItem('safeher-session'); setSession(null); setContacts([]); setPage('home'); navigate('/');
   };
 
